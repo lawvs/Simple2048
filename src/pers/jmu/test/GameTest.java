@@ -1,0 +1,41 @@
+package pers.jmu.test;
+
+import pers.jmu.model.Card;
+import pers.jmu.model.Game;
+
+/**
+ * @version 创建时间：2016年6月26日21:12:53
+ * 
+ *          用于测试Game类
+ */
+public class GameTest {
+
+	public static void main(String[] args) {
+		Game game = new Game();
+		Card[][] gameStatus = game.getCardStatus();
+		displayStatus(gameStatus);
+		game.saveStatus();
+		game.addNewCard();
+		game.setCardValue(1, 3, 8);
+		game.undoStatus();
+		displayStatus(gameStatus);
+		return;
+	}
+
+	/*
+	 * @version 创建时间：2016年6月26日21:00:00
+	 * 
+	 * 显示状态
+	 */
+	private static void displayStatus(Card[][] gameStatus) {
+		for (int x = 0; x < gameStatus.length; ++x) {
+			for (int y = 0; y < gameStatus[x].length; ++y) {
+				System.out.print(gameStatus[x][y].getValue() + " ");
+			}
+			System.out.println("");
+		}
+		System.out.println("");
+		return;
+	}
+
+}

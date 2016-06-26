@@ -1,0 +1,13 @@
+#忽略以下文件
+.DS_Store
+*.lnk
+*.jar
+/bin/
+
+# 忽略文本文件
+*.doc
+*.docx
+*.xls
+*.xlsx
+*.ppt
+*.pptx
