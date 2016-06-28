@@ -15,7 +15,8 @@ public class Card {
 	public Card() {
 		value = 0;
 	}
-
+	
+	
 	/**
 	 * @return the value
 	 */

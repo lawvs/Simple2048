@@ -25,11 +25,12 @@ public class Game {
 	final static int SLIDE_LEFT = 3;
 	final static int SLIDE_RIGHT = 4;
 
-	private int width;// 行数
 	private int height;// 列数
+	private int width;// 行数
 	private Card[][] cardStatus;// 卡片数组
 	private List<Point> emptyCard;// 保存空卡片坐标
 	private Stack<Card[][]> undoStack;// 储存游戏旧状态 在卡片状态改变前存储
+	private int maxUndo;// 最大可undo次数
 
 	/**
 	 * 初始化游戏
@@ -38,6 +39,15 @@ public class Game {
 		init();
 		restart();
 		return;
+	}
+
+	/**
+	 * @version 创建时间：2016年6月26日20:53:23 创建
+	 * 
+	 *          获得game数组
+	 */
+	public Card[][] getCardStatus() {
+		return cardStatus;
 	}
 
 	/*
@@ -50,22 +60,17 @@ public class Game {
 		// TODO Config从配置文件读取width、height
 		width = 4;
 		height = 4;
+		maxUndo = 100;
 
 		/*
 		 * width = Integer.valueOf(Config.getValue("width")); height =
-		 * Integer.valueOf(Config.getValue("height"));
+		 * Integer.valueOf(Config.getValue("height")); maxUndo =
+		 * Integer.valueOf(Config.getValue("maxUndo"));
 		 */
 		cardStatus = new Card[width][height];
 		emptyCard = new ArrayList<Point>();// 保存空卡片坐标
 		undoStack = new Stack<Card[][]>();
 		return;
-	}
-
-	/*
-	 * 2016年6月26日20:53:23 创建 获得game数组
-	 */
-	public Card[][] getCardStatus() {
-		return cardStatus;
 	}
 
 	/**
@@ -117,7 +122,6 @@ public class Game {
 	 *
 	 * @return 包含所有空卡片的ArrayList<Card>
 	 */
-	@SuppressWarnings("unused")
 	private int calcEmptyCard() {
 		emptyCard.clear();// 清空，重新计算
 		// 遍历数组
@@ -197,9 +201,23 @@ public class Game {
 	 *
 	 * @version 2016年6月27日22:55:13
 	 */
-	// TODO 去除bug
 	public void saveStatus() {
-		undoStack.add(cardStatus.clone());
+		Card[][] temp = new Card[width][height];// 卡片数组
+		// 初始化卡片
+		for (int x = 0; x < temp.length; ++x) {
+			for (int y = 0; y < temp[x].length; ++y) {
+				temp[x][y] = new Card();
+				temp[x][y].setValue(cardStatus[x][y].getValue());
+			}
+		}
+		// 判断堆栈是否满
+		if (undoStack.size() < maxUndo) {
+			undoStack.push(temp);
+		} else if (maxUndo > 0) {
+			undoStack.remove(undoStack.firstElement());
+			undoStack.push(temp);
+		}
+
 		return;
 	}
 
@@ -214,7 +232,16 @@ public class Game {
 			return false;
 		}
 		cardStatus = undoStack.pop();
+		calcEmptyCard();// 重新计算空卡片
 		return true;
+	}
+
+	/**
+	 * @version 创建时间：2016年6月28日21:18:01
+	 * @return 当前可回退次数，即回退堆栈大小
+	 */
+	public int undoCount() {
+		return undoStack.size();
 	}
 
 }

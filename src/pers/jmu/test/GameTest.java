@@ -15,10 +15,13 @@ public class GameTest {
 		Card[][] gameStatus = game.getCardStatus();
 		displayStatus(gameStatus);
 		game.saveStatus();
-		game.addNewCard();
-		game.setCardValue(1, 3, 8);
-		game.undoStatus();
+		//game.addNewCard();
+		game.setCardValue(0, 0, 8);
 		displayStatus(gameStatus);
+		game.undoStatus();
+		gameStatus=game.getCardStatus();
+		displayStatus(gameStatus);
+		System.out.println("当前可回退次数:"+game.undoCount());
 		return;
 	}
 
