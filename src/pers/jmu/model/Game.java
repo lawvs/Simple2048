@@ -19,12 +19,6 @@ import java.util.Stack;
  */
 public class Game {
 
-	// 动作状态变量
-	final static int SLIDE_UP = 1;
-	final static int SLIDE_DOWN = 2;
-	final static int SLIDE_LEFT = 3;
-	final static int SLIDE_RIGHT = 4;
-
 	private int height;// 列数
 	private int width;// 行数
 	private Card[][] cardStatus;// 卡片数组
@@ -43,7 +37,7 @@ public class Game {
 
 	/**
 	 * @version 创建时间：2016年6月26日20:53:23 创建
-	 * 
+	 *
 	 *          获得game数组
 	 */
 	public Card[][] getCardStatus() {
@@ -152,52 +146,107 @@ public class Game {
 			return false;
 		}
 		cardStatus[x][y].setValue(value);
+		// if (value > 0){emptyCard.remove( );}
 		return true;
 	}
 
 	/**
-	 * 将game向一个方向移动 上下左右
+	 * 将game向左滑动
 	 *
-	 * @param direction
-	 *            移动方向 SLIDE_UP SLIDE_DOWN ...
 	 * @return 移动是否成功
+	 * @version 创建时间：2016年6月28日22:00:00
 	 */
-	public boolean slideTo(int direction) {
+	public boolean slideLeft() {
 		boolean isChange = false;// 此次移动是否有效
+		saveStatus();// 可能引发小错误
+		// 移动卡片
+		// slideLeft
+		for (int x = 0; x < cardStatus.length; x++) {
+			int tx = 0;// 临时x
+			int ty = 0;// 临时y
+			int v = -1;// 保留前一个方格的值
+			for (int y = 0; y < cardStatus[x].length; y++) {
+				// 值为0
+				if (cardStatus[x][y].getValue() == 0) {
+					// 找到非0值填充
+					for (int i = y + 1; i < cardStatus[x].length; i++) {
+						if (cardStatus[x][i].getValue() == v) {
+							// 合并操作
+							cardStatus[tx][ty].setValue(2 * v);
+							// System.out.println(x+" " +y+ " "+2*v);
+							cardStatus[x][i].setValue(0);
+							isChange = true;// 格子合并
+							v = -1;
+							tx = 0;
+							ty = 0;
+							y--;
+							break;
+						} else if (cardStatus[x][i].getValue() != 0) {
+							v = cardStatus[x][i].getValue();
+							tx = x;
+							ty = y;
+							cardStatus[x][y].setValue(v);
+							cardStatus[x][i].setValue(0);
 
-		saveStatus();
-		switch (direction) {
-		case SLIDE_UP:
+							isChange = true;// 格子移动
+							// System.out.println(x+" "+y);
+							break;
+						}
+					}
 
-			break;
-		case SLIDE_DOWN:
+				} else if (cardStatus[x][y].getValue() == v) {
+					// 合并操作
+					cardStatus[tx][ty].setValue(2 * v);
+					// System.out.println(x+" " +y+ " "+2*v);
+					cardStatus[x][y].setValue(0);
+					isChange = true;// 格子合并
+					v = -1;
+					tx = 0;
+					ty = 0;
+					y--;
+				} else {
+					v = cardStatus[x][y].getValue();
+					tx = x;
+					ty = y;
 
-			break;
-		case SLIDE_LEFT:
-
-			break;
-		case SLIDE_RIGHT:
-
-			break;
-		default:
-			return false;
+				} // end of if
+			}
 		}
 
+		/*
+		 * test for (y = 0; y < cardStatus[0].length; y++) { for (x = 0; x <
+		 * cardStatus.length; x++) { cardStatus[x][y].getValue();
+		 * System.out.println(x + " " + y); } } //test end
+		 */
 		// 重新计算空卡片位置
+		calcEmptyCard();
 		if (emptyCard.isEmpty()) {
 			// 游戏结束
+			// gameover();
 			return false;
 		}
 		if (isChange) {// 此次移动有效
 			addNewCard();
 		} else {// 移动无效
-			undoStatus();
+			undoStack.pop();// 删除保存的状态
 		}
 		return true;
 	}
 
+	// 合并x2y2位置卡片到x1y1卡片，值为x1y1的值*2
+	private boolean merge(int x1, int y1, int x2, int y2) {
+		// TODO 合并x2y2到x1y1，值为x1y1的值*2
+		return true;
+	}
+
+	// 将x1y1卡片移动到x2y2
+	private boolean move(int x1, int y1, int x2, int y2) {
+		// TODO 将x1y1移动到x2y2
+		return true;
+	}
+
 	/**
-	 * 保存当前游戏状态到undoStack ********** 当前不可用！！！ **********
+	 * 保存当前游戏状态到undoStack
 	 *
 	 * @version 2016年6月27日22:55:13
 	 */
@@ -210,10 +259,11 @@ public class Game {
 				temp[x][y].setValue(cardStatus[x][y].getValue());
 			}
 		}
+
 		// 判断堆栈是否满
 		if (undoStack.size() < maxUndo) {
 			undoStack.push(temp);
-		} else if (maxUndo > 0) {
+		} else if (maxUndo > 0) {// 移除最远状态，加入新状态
 			undoStack.remove(undoStack.firstElement());
 			undoStack.push(temp);
 		}

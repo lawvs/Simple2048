@@ -1,5 +1,6 @@
 package pers.jmu.test;
 
+
 import pers.jmu.model.Card;
 import pers.jmu.model.Game;
 
@@ -13,15 +14,17 @@ public class GameTest {
 	public static void main(String[] args) {
 		Game game = new Game();
 		Card[][] gameStatus = game.getCardStatus();
-		displayStatus(gameStatus);
+		//displayStatus(gameStatus);
 		game.saveStatus();
 		//game.addNewCard();
-		game.setCardValue(0, 0, 8);
+		game.setCardValue(0, 1, 8);
+		game.setCardValue(0, 3, 8);
 		displayStatus(gameStatus);
-		game.undoStatus();
-		gameStatus=game.getCardStatus();
-		displayStatus(gameStatus);
+		//game.undoStatus();
+		
 		System.out.println("当前可回退次数:"+game.undoCount());
+		game.slideLeft();
+		displayStatus(game.getCardStatus());
 		return;
 	}
 

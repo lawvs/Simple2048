@@ -5,6 +5,7 @@
 /bin/
 
 # 忽略文本文件
+*.tmp
 *.doc
 *.docx
 *.xls
