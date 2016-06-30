@@ -6,6 +6,9 @@
  */
 package pers.jmu.model;
 
+import pers.jmu.util.Config;
+import pers.jmu.util.Log;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
@@ -61,16 +64,11 @@ public class Game {
 	 */
 	private void init() {
 
-		// TODO Config从配置文件读取width、height
-		width = 4;
-		height = 4;
-		maxUndo = 100;
+		width = Integer.valueOf(Config.getValue("width"));
+		height = Integer.valueOf(Config.getValue("height"));
+		maxUndo = Integer.valueOf(Config.getValue("maxUndo"));
+		maxScore = Integer.valueOf(Config.getValue("maxScore"));
 
-		/*
-		 * width = Integer.valueOf(Config.getValue("width")); height =
-		 * Integer.valueOf(Config.getValue("height")); maxUndo =
-		 * Integer.valueOf(Config.getValue("maxUndo"));
-		 */
 		cardStatus = new Card[width][height];
 		emptyCard = new ArrayList<Point>();// 保存空卡片坐标
 		undoStack = new Stack<Card[][]>();
@@ -96,6 +94,7 @@ public class Game {
 		// 随机改变两张空卡片为2
 		addNewCard();
 		addNewCard();
+		Log.info("开始游戏");
 		return;
 	}
 
@@ -154,7 +153,7 @@ public class Game {
 	 */
 	public boolean setCardValue(int x, int y, int value) {
 		if (x < 0 || x >= width || y < 0 || y >= height) {// 越界检查
-			// TODO Log.warn("坐标越界，设置卡片值失败");
+			Log.warn("坐标越界，设置卡片值失败");
 			return false;
 		}
 		cardStatus[x][y].setValue(value);
@@ -199,7 +198,7 @@ public class Game {
 			return false;
 		}
 		if (isChange) {// 此次移动有效
-			step++;//移动有效，步数加1
+			step++;// 移动有效，步数加1
 			addNewCard();
 		} else {// 移动无效s
 			undoStack.pop();// 删除保存的状态 可能引起undo次数减少
@@ -429,38 +428,39 @@ public class Game {
 	// TODO 动画接口
 	// 合并x2y2位置卡片到x1y1卡片，值为x1y1的值*2
 	private boolean merge(int x1, int y1, int x2, int y2) {
-		// TODO 计算分数
 		cardStatus[x1][y1].setValue(2 * cardStatus[x1][y1].getValue());
 		cardStatus[x2][y2].setValue(0);
-		nowScore+=cardStatus[x1][y1].getValue();
+		nowScore += cardStatus[x1][y1].getValue();// 计算分数
 		isChange = true;// 布局发生改变
 		return true;
 	}
 
-	// 将x2y2卡片移动到x1y1
-	private boolean move(int x1, int y1, int x2, int y2) {
-		cardStatus[x1][y1].setValue(cardStatus[x2][y2].getValue());
-		cardStatus[x2][y2].setValue(0);
-		isChange = true;// 布局发生改变
+	// 将fromX fromY的卡片移动到toX toY
+	private boolean move(int toX, int toY, int fromX, int fromY) {
+		cardStatus[toX][toY].setValue(cardStatus[fromX][fromY].getValue());
+		cardStatus[fromX][fromY].setValue(0);
+		isChange = true;// 状态发生改变
 		return true;
 	}
 
 	private void gameover() {
-		if (nowScore>maxScore) {
-			maxScore=nowScore;
-			saveScore();
+		if (nowScore > maxScore) {
+			maxScore = nowScore;
+			saveMaxScore();// 保存最高分
 		}
-		//controller.gameover();
-		
+		Log.info("游戏结束 分数：" + nowScore);
+		// controller.gameover();
+
 		return;
 	}
 
 	/*
 	 * 保存成绩
 	 */
-	private void saveScore() {
-		// TODO Auto-generated method stub
-		
+	private void saveMaxScore() {
+		Config.setValue("maxScore", String.valueOf(maxScore));
+		Config.saveValue("保存最高分:" + maxScore);
+		return;
 	}
 
 	/**
@@ -513,15 +513,15 @@ public class Game {
 	 * @return 撤销成功返回true
 	 * @version 2016年6月27日22:44:44
 	 */
-	
+
 	public boolean undoStatus() {
 		if (undoStack == null || undoStack.isEmpty()) {
 			return false;
 		}
 		cardStatus = undoStack.pop();
 		step--;
-		//undo之后当前分数不会恢复为旧分数
-		nowScore/=2;// undo之后分数减半，以暂时修补无法回复的缺陷
+		// undo之后当前分数不会恢复为旧分数
+		nowScore /= 2;// undo之后分数减半，以暂时修补无法回复的缺陷
 		calcEmptyCard();// 重新计算空卡片
 		return true;
 	}
@@ -533,7 +533,7 @@ public class Game {
 	public int undoCount() {
 		return undoStack.size();
 	}
-	
+
 	/**
 	 * @return the maxScore
 	 * @version 创建时间：2016年6月30日21:18:11
