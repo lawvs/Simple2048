@@ -24,7 +24,7 @@ import java.util.Properties;
  * 读取设置 配置文件路径 resoure/config.properties
  */
 public class Config {
-	private String configPath = "resoure/config.properties";// 类目录下配置文件名
+	private String configPath = "resources/config.properties";// 类目录下配置文件名
 	private static String configName = "config.properties";
 	private static Properties props;// 配置文件对象
 

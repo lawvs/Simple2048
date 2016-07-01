@@ -2,6 +2,7 @@ package pers.jmu.test;
 
 import java.util.Scanner;
 
+import pers.jmu.controller.GameController;
 import pers.jmu.model.Card;
 import pers.jmu.model.Game;
 
@@ -26,16 +27,16 @@ public class GameTest {
 			c = s.charAt(0);
 			switch (c) {
 			case 'w':
-				game.slideTo(Game.SLIDE_UP);
+				game.swipeTo(GameController.SWIPE_UP);
 				break;
 			case 's':
-				game.slideTo(Game.SLIDE_DOWN);
+				game.swipeTo(GameController.SWIPE_DOWN);
 				break;
 			case 'a':
-				game.slideTo(Game.SLIDE_LEFT);
+				game.swipeTo(GameController.SWIPE_LEFT);
 				break;
 			case 'd':
-				game.slideTo(Game.SLIDE_RIGHT);
+				game.swipeTo(GameController.SWIPE_RIGHT);
 				break;
 			case 'r':
 				game.restart();

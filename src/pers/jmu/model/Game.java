@@ -1,11 +1,12 @@
 /**
  * @version 创建时间：2016年6月26日17:30:52
- * Easy2048逻辑类
+ * Simple2048逻辑类
  * 实现游戏逻辑
  *
  */
 package pers.jmu.model;
 
+import pers.jmu.controller.GameController;
 import pers.jmu.util.Config;
 import pers.jmu.util.Log;
 
@@ -22,13 +23,14 @@ import java.util.Stack;
  */
 public class Game {
 	// 动作状态变量
-	public final static int SLIDE_UP = 1;
-	public final static int SLIDE_DOWN = 2;
-	public final static int SLIDE_LEFT = 3;
-	public final static int SLIDE_RIGHT = 4;
+	private final static int SWIPE_UP = 1;
+	private final static int SWIPE_DOWN = 2;
+	private final static int SWIPE_LEFT = 3;
+	private final static int SWIPE_RIGHT = 4;
 
-	private int height;// 列数
-	private int width;// 行数
+	private GameController gameController;
+	private int cardRow;// 行数
+	private int cardColumn;// 列数
 	private Card[][] cardStatus;// 卡片数组
 	private List<Point> emptyCard;// 保存空卡片坐标
 	private Stack<Card[][]> undoStack;// 储存游戏旧状态 在卡片状态改变前存储
@@ -64,12 +66,12 @@ public class Game {
 	 */
 	private void init() {
 
-		width = Integer.valueOf(Config.getValue("width"));
-		height = Integer.valueOf(Config.getValue("height"));
+		cardRow = Integer.valueOf(Config.getValue("cardRow"));
+		cardColumn = Integer.valueOf(Config.getValue("cardColumn"));
 		maxUndo = Integer.valueOf(Config.getValue("maxUndo"));
 		maxScore = Integer.valueOf(Config.getValue("maxScore"));
 
-		cardStatus = new Card[width][height];
+		cardStatus = new Card[cardRow][cardColumn];
 		emptyCard = new ArrayList<Point>();// 保存空卡片坐标
 		undoStack = new Stack<Card[][]>();
 		return;
@@ -152,7 +154,7 @@ public class Game {
 	 * @return 成功返回true 失败返回false
 	 */
 	public boolean setCardValue(int x, int y, int value) {
-		if (x < 0 || x >= width || y < 0 || y >= height) {// 越界检查
+		if (x < 0 || x >= cardRow || y < 0 || y >= cardColumn) {// 越界检查
 			Log.warn("坐标越界，设置卡片值失败");
 			return false;
 		}
@@ -169,21 +171,21 @@ public class Game {
 	 * @return 移动是否成功
 	 * @version 创建时间：2016年6月30日20:54:44
 	 */
-	public boolean slideTo(int direction) {
+	public boolean swipeTo(int direction) {
 		isChange = false;// 此次移动是否有效
 		saveStatus();// 可能引发小错误 undo次数可能减少
 
 		switch (direction) {
-		case SLIDE_UP:
+		case SWIPE_UP:
 			slideUP();
 			break;
-		case SLIDE_DOWN:
+		case SWIPE_DOWN:
 			slideDown();
 			break;
-		case SLIDE_LEFT:
+		case SWIPE_LEFT:
 			slideLeft();
 			break;
-		case SLIDE_RIGHT:
+		case SWIPE_RIGHT:
 			slideRight();
 			break;
 		default:
@@ -425,13 +427,13 @@ public class Game {
 		return true;
 	}
 
-	// TODO 动画接口
 	// 合并x2y2位置卡片到x1y1卡片，值为x1y1的值*2
 	private boolean merge(int x1, int y1, int x2, int y2) {
 		cardStatus[x1][y1].setValue(2 * cardStatus[x1][y1].getValue());
 		cardStatus[x2][y2].setValue(0);
 		nowScore += cardStatus[x1][y1].getValue();// 计算分数
 		isChange = true;// 布局发生改变
+		gameController.merge(x1, y1, x2, y2);
 		return true;
 	}
 
@@ -440,6 +442,7 @@ public class Game {
 		cardStatus[toX][toY].setValue(cardStatus[fromX][fromY].getValue());
 		cardStatus[fromX][fromY].setValue(0);
 		isChange = true;// 状态发生改变
+		gameController.move(toX, toY, fromX, fromY);
 		return true;
 	}
 
@@ -449,7 +452,7 @@ public class Game {
 			saveMaxScore();// 保存最高分
 		}
 		Log.info("游戏结束 分数：" + nowScore);
-		// controller.gameover();
+		gameController.gameover();
 
 		return;
 	}
@@ -469,7 +472,7 @@ public class Game {
 	 * @version 2016年6月27日22:55:13
 	 */
 	public void saveStatus() {
-		Card[][] temp = new Card[width][height];// 卡片数组
+		Card[][] temp = new Card[cardRow][cardColumn];// 卡片数组
 		// 初始化卡片
 		for (int x = 0; x < temp.length; ++x) {
 			for (int y = 0; y < temp[x].length; ++y) {
@@ -551,6 +554,15 @@ public class Game {
 	 */
 	public int getStep() {
 		return step;
+	}
+
+	/**
+	 * @param gamecontroller
+	 *            the gamecontroller to set
+	 */
+	public void setGameController(GameController gameController) {
+		this.gameController = gameController;
+
 	}
 
 }
