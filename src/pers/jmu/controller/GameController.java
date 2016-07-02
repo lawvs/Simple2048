@@ -27,19 +27,35 @@ public class GameController {
 		game.setGameController(this);
 	}
 	
-	public Card[][] getCard() {
-		return game.getCardStatus();
+	/**
+	 * @param gameView the gameView to set
+	 */
+	public void setGameView(GameView gameView) {
+		this.gameView = gameView;
+	}
+
+	public Card[][] getCards() {
+		Card[][] cards = game.getCardStatus();
+		//cards[0][0].setValue(2048);
+		return cards;
 	}
 	
 	public void move(int direction) {
-		if(game.swipeTo(direction) == true ){
-			gameView.refrsh();
+		boolean flag = false;
+		flag = game.swipeTo(direction);
+		if (flag) {
+			gameView.refrshGame();
 		}
 		return;
 	}
 
 	public void gameover() {
 		gameView.gameover();
+		return;
+	}
+
+	public void restart() {
+		game.restart();
 		return;
 	}
 
@@ -51,6 +67,11 @@ public class GameController {
 	public void move(int toX, int toY, int fromX, int fromY) {
 		// TODO 动画接口
 		
+	}
+
+	public void undo() {
+		game.undoStatus();
+		return;
 	}
 
 }

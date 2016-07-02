@@ -32,6 +32,8 @@ public class GameView extends Application {
 
 	private GameController gameController;
 	private Canvas canvasGame;
+	private Canvas canvasBg;
+	private Canvas canvasScore;
 	private Card[][] cards;
 	private double widowWidth;
 	private double windowHeight;
@@ -44,9 +46,13 @@ public class GameView extends Application {
 	public void init() throws Exception {
 		super.init();
 		gameController = new GameController();// 初始化
-
+		gameController.setGameView(this);
+		cards = gameController.getCards();
 		widowWidth = Double.valueOf(Config.getValue("windowWidth"));
 		windowHeight = Double.valueOf(Config.getValue("windowHeight"));
+		canvasBg = new Canvas(widowWidth, windowHeight);
+		canvasScore = new Canvas();
+		canvasGame = new Canvas();
 	}
 
 	/*
@@ -60,20 +66,22 @@ public class GameView extends Application {
 		primaryStage.setTitle(title);// 设置标题
 		// 设置图标
 		primaryStage.getIcons().add(new Image(this.getClass().getResourceAsStream("/resources/icon.png")));
-
 		primaryStage.setWidth(widowWidth);
 		primaryStage.setHeight(windowHeight);
+		primaryStage.setResizable(false);// 不可调整大小
+
 		// 新组
 		Group root = new Group();
 
 		// 绘制背景
-		Node canvasBg = drawBG();
+		drawBG();
 		root.getChildren().add(canvasBg);
 		// 绘制游戏界面
-
-		Node canvasGame = drawGame();
+		drawGame();
 		root.getChildren().add(canvasGame);
-
+		// 绘制分数
+		drawScore();
+		root.getChildren().add(canvasScore);
 		// 绘制文字
 		Node canvasText = drawTexts();
 		root.getChildren().add(canvasText);
@@ -90,6 +98,9 @@ public class GameView extends Application {
 
 	}
 
+	/*
+	 * 键盘事件
+	 */
 	private void addKeyHandler(Scene scene) {
 		scene.setOnKeyPressed(ke -> {
 			KeyCode keyCode = ke.getCode();
@@ -109,17 +120,25 @@ public class GameView extends Application {
 				gameController.move(GameController.SWIPE_RIGHT);
 				return;
 			}
-			/*
-			 * if (keyCode.equals(KeyCode.R)) { gameController.restart();
-			 * return; }
-			 *
-			 * if (keyCode.equals(KeyCode.Q) || keyCode.equals(KeyCode.ESCAPE))
-			 * { gameController.quitGame(); return; }
-			 */
+
+			// 重新开始
+			if (keyCode.equals(KeyCode.R)) {
+				restart();
+				return;
+			}
+			// UnDo
+			if (keyCode.equals(KeyCode.U)) {
+				gameController.undo();
+				refrshGame();
+				return;
+			}
 
 		});
 	}
 
+	/*
+	 * 滑动事件
+	 */
 	private void addSwipeHandlers(Scene scene) {
 		scene.setOnSwipeUp(e -> move(GameController.SWIPE_UP));
 		scene.setOnSwipeRight(e -> move(GameController.SWIPE_RIGHT));
@@ -134,8 +153,8 @@ public class GameView extends Application {
 	/*
 	 * 绘制背景
 	 */
-	private Node drawBG() {
-		Canvas canvasBg = new Canvas(widowWidth, windowHeight);
+	private Canvas drawBG() {
+
 		GraphicsContext gc = canvasBg.getGraphicsContext2D();
 		Color color;
 		color = getColor(BG);
@@ -169,7 +188,7 @@ public class GameView extends Application {
 	/*
 	 * 绘制游戏界面
 	 */
-	private Node drawGame() {
+	private void drawGame() {
 
 		double cardWidth = Double.valueOf(Config.getValue("cardWidth"));// 卡片宽
 		double cardHeight = Double.valueOf(Config.getValue("cardHeight"));// 卡片高
@@ -185,8 +204,10 @@ public class GameView extends Application {
 		double startY = windowHeight / 2 - h / 2;// 排列起始点y
 		double x = startX - border * cardWidth;
 		double y = startY - border * cardHeight;
-		canvasGame = new Canvas(startX + w, startY + h);
 
+		// 画布大小
+		canvasGame.setWidth(startX + w);
+		canvasGame.setHeight(startY + h);
 		GraphicsContext gc = canvasGame.getGraphicsContext2D();
 		Color color;
 
@@ -196,23 +217,42 @@ public class GameView extends Application {
 		gc.fillRoundRect(x, y, w, h, arc, arc);
 
 		// 绘制卡片
-
+		cards = gameController.getCards();
 		for (int i = 0; i < cardColumn; i++) {
 			for (int j = 0; j < cardRow; j++) {
-				color = getColor(0);
+				int value;
+				value = cards[i][j].getValue();
+				color = getColor(value);
 				gc.setFill(color);
 				double cardX = startX + (1 + border) * cardWidth * j;
 				double cardY = startY + (1 + border) * cardHeight * i;
 				gc.fillRoundRect(cardX, cardY, cardWidth, cardHeight, arc, arc);
-				color = Color.WHITE;
+				color = Color.WHITE;// 字体颜色
 				gc.setFill(color);
+
+				String strValue = value != 0 ? String.valueOf(value) : "";
+				int fontLlen = strValue.length();
 				double fontsize = 40;
+				// 文本过长由cardWidth自动修正 偏移量为cardX + cardWidth / 2 - 字体大小修正系数* fontsize / 2 - 字体长度修正*(fontLlen-1) * fontsize / 2
+				double fontX = Math.max(cardX, cardX + cardWidth / 2 - 0.6 * fontsize / 2 - 0.46*(fontLlen-1) * fontsize / 2);
+				double fontY = cardY + cardHeight / 2 + 0.7 * fontsize / 2;
 				gc.setFont(Font.font("arial", FontWeight.LIGHT, fontsize));
-				gc.fillText("2", cardX+cardWidth/2-0.6*fontsize/2, cardY+cardHeight/2+0.65*fontsize/2, cardWidth);
+				gc.fillText(strValue, fontX, fontY, cardWidth);
 			}
 		}
 
-		return canvasGame;
+		return;
+	}
+
+	private void drawScore() {
+		// TODO 绘制分数
+		return;
+	}
+
+	public void refrshGame() {
+		drawGame();
+		drawScore();
+		return;
 	}
 
 	/*
@@ -229,6 +269,21 @@ public class GameView extends Application {
 		case 2:
 			color = new Color(220.0 / 255, 211.0 / 255, 201.0 / 255, 255.0 / 255);
 			break;
+		case 4:
+			color = getColor(2).darker();
+			break;
+		case 8:
+			color = getColor(4).darker();
+			break;
+		case 16:
+			color = getColor(8).darker();
+			break;
+		case 32:
+			color = getColor(16).darker();
+			break;
+		case 64:
+			color = getColor(32).darker();
+			break;
 		case BG:
 			// 背景色
 			color = new Color(250.0 / 255, 247.0 / 255, 238.0 / 255, 255.0 / 255);
@@ -242,14 +297,16 @@ public class GameView extends Application {
 			color = new Color(112.0 / 255, 104.0 / 255, 96.0 / 255, 0.9);
 			break;
 		default:
-			color = Color.WHITE;
+			color = Color.BLACK;
 			break;
 		}
-		// TODO 获取颜色
+
 		return color;
 	}
 
 	/**
+	 * 设置控制器
+	 *
 	 * @param gamecontroller
 	 *            the gamecontroller to set
 	 */
@@ -258,15 +315,24 @@ public class GameView extends Application {
 	}
 
 	/**
-	 * 游戏结束
+	 * 游戏结束 背景变红
 	 */
 	public void gameover() {
-		// TODO 游戏结束
-
+		GraphicsContext gc = canvasBg.getGraphicsContext2D();
+		Color color;
+		color = Color.RED;
+		gc.setFill(color);
+		gc.fillRoundRect(0, 0, widowWidth, windowHeight, 0, 0);
+		return;
 	}
 
-	public void refrsh() {
-		// TODO Auto-generated method stub
-
+	/*
+	 * 重新开始游戏
+	 */
+	private void restart() {
+		gameController.restart();
+		drawBG();
+		refrshGame();
+		return;
 	}
 }

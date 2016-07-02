@@ -194,7 +194,7 @@ public class Game {
 
 		// 重新计算空卡片位置
 		calcEmptyCard();
-		if (emptyCard.isEmpty()) {
+		if (!canMerge()) {
 			// 游戏结束
 			gameover();
 			return false;
@@ -206,6 +206,24 @@ public class Game {
 			undoStack.pop();// 删除保存的状态 可能引起undo次数减少
 		}
 		return true;
+	}
+
+	/*
+	 * 是否能够进一步行动
+	 * 判断游戏是否结束
+	 * 能进一步行动返回true
+	 * 否则返回false
+	 */
+	private boolean canMerge() {
+		// 不为空 能移动
+		if (!emptyCard.isEmpty()) {
+			return true;
+		}
+		// TODO 两次遍历卡片，判断能否合并
+		int value;
+		value = -1;
+		
+		return false;
 	}
 
 	/**
