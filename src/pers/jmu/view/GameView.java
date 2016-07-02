@@ -33,7 +33,8 @@ public class GameView extends Application {
 	private GameController gameController;
 	private Canvas canvasGame;
 	private Canvas canvasBg;
-	private Canvas canvasScore;
+	private TextFlow textFlowScore;
+	private Text textScore;
 	private Card[][] cards;
 	private double widowWidth;
 	private double windowHeight;
@@ -51,8 +52,10 @@ public class GameView extends Application {
 		widowWidth = Double.valueOf(Config.getValue("windowWidth"));
 		windowHeight = Double.valueOf(Config.getValue("windowHeight"));
 		canvasBg = new Canvas(widowWidth, windowHeight);
-		canvasScore = new Canvas();
 		canvasGame = new Canvas();
+		textScore = new Text();
+		textFlowScore = new TextFlow();
+		return;
 	}
 
 	/*
@@ -80,8 +83,9 @@ public class GameView extends Application {
 		drawGame();
 		root.getChildren().add(canvasGame);
 		// 绘制分数
+		textFlowScore.getChildren().addAll(textScore);
 		drawScore();
-		root.getChildren().add(canvasScore);
+		root.getChildren().add(textFlowScore);
 		// 绘制文字
 		Node canvasText = drawTexts();
 		root.getChildren().add(canvasText);
@@ -166,7 +170,7 @@ public class GameView extends Application {
 	/*
 	 * 绘制2048文字
 	 */
-	private Node drawTexts() {
+	private Group drawTexts() {
 		TextFlow textFlow = new TextFlow();
 		textFlow.setLayoutX(20);
 		textFlow.setLayoutY(10);
@@ -198,8 +202,8 @@ public class GameView extends Application {
 		double cardRow = Double.valueOf(Config.getValue("cardRow"));
 		double cardColumn = Double.valueOf(Config.getValue("cardColumn"));
 
-		double w = cardWidth * cardRow + border * cardWidth * (cardRow + 1);
-		double h = cardHeight * cardColumn + border * cardHeight * (cardColumn + 1);
+		double w = cardWidth * cardColumn + border * cardWidth * (cardColumn + 1);
+		double h = cardHeight * cardRow + border * cardHeight * (cardRow + 1);
 		double startX = widowWidth / 2 - w / 2;// 排列起始点x
 		double startY = windowHeight / 2 - h / 2;// 排列起始点y
 		double x = startX - border * cardWidth;
@@ -218,8 +222,8 @@ public class GameView extends Application {
 
 		// 绘制卡片
 		cards = gameController.getCards();
-		for (int i = 0; i < cardColumn; i++) {
-			for (int j = 0; j < cardRow; j++) {
+		for (int i = 0; i < cards.length; i++) {
+			for (int j = 0; j < cards[i].length; j++) {
 				int value;
 				value = cards[i][j].getValue();
 				color = getColor(value);
@@ -233,8 +237,10 @@ public class GameView extends Application {
 				String strValue = value != 0 ? String.valueOf(value) : "";
 				int fontLlen = strValue.length();
 				double fontsize = 40;
-				// 文本过长由cardWidth自动修正 偏移量为cardX + cardWidth / 2 - 字体大小修正系数* fontsize / 2 - 字体长度修正*(fontLlen-1) * fontsize / 2
-				double fontX = Math.max(cardX, cardX + cardWidth / 2 - 0.6 * fontsize / 2 - 0.46*(fontLlen-1) * fontsize / 2);
+				// 文本过长由cardWidth自动修正 偏移量为cardX + cardWidth / 2 - 字体大小修正系数*
+				// fontsize / 2 - 字体长度修正*(fontLlen-1) * fontsize / 2
+				double fontX = Math.max(cardX,
+						cardX + cardWidth / 2 - 0.6 * fontsize / 2 - 0.46 * (fontLlen - 1) * fontsize / 2);
 				double fontY = cardY + cardHeight / 2 + 0.7 * fontsize / 2;
 				gc.setFont(Font.font("arial", FontWeight.LIGHT, fontsize));
 				gc.fillText(strValue, fontX, fontY, cardWidth);
@@ -245,7 +251,26 @@ public class GameView extends Application {
 	}
 
 	private void drawScore() {
-		// TODO 绘制分数
+		// 文字
+		// text.setFont(Font.loadFont("file:resources/fonts/isadoracyr.ttf",
+		// 120));
+		//文字位置
+		textFlowScore.setLayoutX(widowWidth / 2);
+		textFlowScore.setLayoutY(20);
+		int score;
+		score = gameController.getScore();
+		String str = Messages.getString("score") + String.valueOf(score);
+		
+		textScore.setText(str);
+		// 分数高于最高分，文字变为色
+		if (score > gameController.getMaxScore()) {
+			textScore.setFill(Color.GOLD);
+		}else {
+			textScore.setFill(getColor(TEXT));
+		}
+		
+		textScore.setFont(Font.font("微软雅黑", FontWeight.BOLD, 30));
+		// t.setFontSmoothingType(FontSmoothingType.LCD);
 		return;
 	}
 

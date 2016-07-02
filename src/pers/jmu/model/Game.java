@@ -197,6 +197,7 @@ public class Game {
 		if (!canMerge()) {
 			// 游戏结束
 			gameover();
+			undoStack.pop();// 状态无效
 			return false;
 		}
 		if (isChange) {// 此次移动有效
@@ -206,24 +207,6 @@ public class Game {
 			undoStack.pop();// 删除保存的状态 可能引起undo次数减少
 		}
 		return true;
-	}
-
-	/*
-	 * 是否能够进一步行动
-	 * 判断游戏是否结束
-	 * 能进一步行动返回true
-	 * 否则返回false
-	 */
-	private boolean canMerge() {
-		// 不为空 能移动
-		if (!emptyCard.isEmpty()) {
-			return true;
-		}
-		// TODO 两次遍历卡片，判断能否合并
-		int value;
-		value = -1;
-		
-		return false;
 	}
 
 	/**
@@ -464,6 +447,47 @@ public class Game {
 		return true;
 	}
 
+	/*
+	 * 是否能够进一步行动 判断游戏是否结束 能进一步行动返回true 否则返回false
+	 */
+	private boolean canMerge() {
+		// 不为空 能移动
+		if (!emptyCard.isEmpty()) {
+			return true;
+		}
+	
+		// 横向遍历
+		for (int x = 0; x < cardStatus.length; x++) {
+			int v = -1;// 保留前一个方格的值
+			for (int y = 0; y < cardStatus[x].length; y++) {
+				// 值为0
+				if (cardStatus[x][y].getValue() == v) {
+					// 值和前一个格子相同，可以合并
+					return true;
+				} else if (cardStatus[x][y].getValue() != 0) {
+					// 等于0也能正常运行
+					v = cardStatus[x][y].getValue();
+				}
+			}
+		}
+		// 纵向遍历
+		for (int y = 0; y < cardStatus[0].length; y++) {
+			int v = -1;// 保留前一个方格的值
+			for (int x = 0; x < cardStatus.length; x++) {
+				// 值为0
+				if (cardStatus[x][y].getValue() == v) {
+					// 值和前一个格子相同，可以合并
+					return true;
+				} else if (cardStatus[x][y].getValue() != 0) {
+					// 等于0也能正常运行
+					v = cardStatus[x][y].getValue();
+				}
+			}
+		}
+	
+		return false;
+	}
+
 	private void gameover() {
 		if (nowScore > maxScore) {
 			maxScore = nowScore;
@@ -544,6 +568,7 @@ public class Game {
 		// undo之后当前分数不会恢复为旧分数
 		nowScore /= 2;// undo之后分数减半，以暂时修补无法回复的缺陷
 		calcEmptyCard();// 重新计算空卡片
+		Log.info("回退成功，当前可回退次数：" + undoCount());
 		return true;
 	}
 

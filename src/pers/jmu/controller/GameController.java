@@ -74,4 +74,14 @@ public class GameController {
 		return;
 	}
 
+	public int getScore() {
+		
+		return game.getNowScore();
+	}
+
+	public int getMaxScore() {
+		
+		return game.getMaxScore();
+	}
+
 }
