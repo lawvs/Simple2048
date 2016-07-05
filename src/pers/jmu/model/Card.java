@@ -9,7 +9,9 @@ package pers.jmu.model;
  * 2048游戏卡片类
  */
 public class Card {
-
+	public final static int ILLEGAL=Integer.MIN_VALUE;// 非法的卡片数值
+	public final static int BLOCK=-1;// 障碍卡片数值 
+	
 	private int value;// 卡片的值
 
 	public Card() {

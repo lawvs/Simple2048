@@ -8,7 +8,6 @@ package pers.jmu.model;
 
 import pers.jmu.controller.GameController;
 import pers.jmu.util.Config;
-import pers.jmu.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,10 +22,10 @@ import java.util.Stack;
  */
 public class Game {
 	// 动作状态变量
-	private final static int SWIPE_UP = 1;
-	private final static int SWIPE_DOWN = 2;
-	private final static int SWIPE_LEFT = 3;
-	private final static int SWIPE_RIGHT = 4;
+	private final int SWIPE_UP = 1;
+	private final int SWIPE_DOWN = 2;
+	private final int SWIPE_LEFT = 3;
+	private final int SWIPE_RIGHT = 4;
 
 	private GameController gameController;
 	private int cardRow;// 行数
@@ -92,11 +91,10 @@ public class Game {
 				emptyCard.add(new Point(x, y));// 加入
 			}
 		}
-
 		// 随机改变两张空卡片为2
 		addNewCard();
 		addNewCard();
-		Log.info("开始游戏");
+
 		return;
 	}
 
@@ -155,7 +153,6 @@ public class Game {
 	 */
 	public boolean setCardValue(int x, int y, int value) {
 		if (x < 0 || x >= cardRow || y < 0 || y >= cardColumn) {// 越界检查
-			Log.warn("坐标越界，设置卡片值失败");
 			return false;
 		}
 		cardStatus[x][y].setValue(value);
@@ -165,7 +162,7 @@ public class Game {
 
 	/**
 	 * 将game向一个方向移动 上下左右
-	 * 
+	 *
 	 * @param direction
 	 *            移动方向 SLIDE_UP SLIDE_DOWN ...
 	 * @return 移动是否成功
@@ -194,24 +191,25 @@ public class Game {
 
 		// 重新计算空卡片位置
 		calcEmptyCard();
-		if (!canMerge()) {
-			// 游戏结束
-			gameover();
-			undoStack.pop();// 状态无效
-			return false;
-		}
+
 		if (isChange) {// 此次移动有效
 			step++;// 移动有效，步数加1
 			addNewCard();
-		} else {// 移动无效s
+			return true;
+		} else {// 移动无效
 			undoStack.pop();// 删除保存的状态 可能引起undo次数减少
+		}
+		if (!canMerge()) {
+			// 游戏结束
+			gameover();
+			return false;
 		}
 		return true;
 	}
 
 	/**
 	 * 将game向上滑动
-	 * 
+	 *
 	 * @return 移动是否成功
 	 * @version 创建时间：2016年6月30日20:50:00
 	 */
@@ -220,27 +218,33 @@ public class Game {
 		for (int y = 0; y < cardStatus[0].length; y++) {
 			int tx = 0;// 临时x
 			int ty = 0;// 临时y
-			int v = -1;// 保留前一个方格的值
+			int v = Card.ILLEGAL;// 保留前一个方格的值 初始化为非法值
 			for (int x = 0; x < cardStatus.length; x++) {
 				// 值为0
 				if (cardStatus[x][y].getValue() == 0) {
 					// 尝试找到非0值填充，或进行合并
 					for (int i = x + 1; i < cardStatus.length; i++) {
+						int temval = cardStatus[i][y].getValue();
 						// 找到值和空格前格子值相同，进行合并
-						if (cardStatus[i][y].getValue() == v) {
+						if (temval == v) {
 							// 合并操作
 							merge(tx, ty, i, y);
-							x--;// 合并后格子变为0，需重新检查
-							// 清空临时变量
-							v = -1;// 不允许重复合并，不允许如2 2 2 2直接变为4
+							x--;// 合并后该格子变为0，需重新检查
+							// 清空临时变量 达到不允许重复合目的，不允许如2 2 2 2直接变为4
+							v = Card.ILLEGAL;
 							tx = 0;
 							ty = 0;
 							break;
-						} else if (cardStatus[i][y].getValue() != 0) {
-							v = cardStatus[i][y].getValue();
+						} else if (temval > 0) {
+							v = temval;
 							tx = x;
 							ty = y;
 							move(x, y, i, y);
+							break;
+						} else if (temval == Card.BLOCK) {// 障碍卡片 清空变量
+							v = Card.ILLEGAL;
+							tx = 0;
+							ty = 0;
 							break;
 						}
 					} // end of for
@@ -249,7 +253,7 @@ public class Game {
 					// 合并操作
 					merge(tx, ty, x, y);
 					x--;// 合并后格子变为0，需重新检查
-					v = -1;
+					v = Card.ILLEGAL;
 					tx = 0;
 					ty = 0;
 
@@ -266,7 +270,7 @@ public class Game {
 
 	/**
 	 * 将game向下滑动
-	 * 
+	 *
 	 * @return 移动是否成功
 	 * @version 创建时间：2016年6月29日23:27:00
 	 */
@@ -275,27 +279,33 @@ public class Game {
 		for (int y = 0; y < cardStatus[0].length; y++) {
 			int tx = 0;// 临时x
 			int ty = 0;// 临时y
-			int v = -1;// 保留前一个方格的值
+			int v = Card.ILLEGAL;// 保留前一个方格的值 初始化为非法值
 			for (int x = cardStatus.length - 1; x >= 0; x--) {
 				// 值为0
 				if (cardStatus[x][y].getValue() == 0) {
 					// 尝试找到非0值填充，或进行合并
 					for (int i = x - 1; i >= 0; i--) {
+						int temval = cardStatus[i][y].getValue();
 						// 找到值和空格前格子值相同，进行合并
-						if (cardStatus[i][y].getValue() == v) {
+						if (temval == v) {
 							// 合并操作
 							merge(tx, ty, i, y);
 							x++;// 合并后格子变为0，需重新检查
 							// 清空临时变量
-							v = -1;// 不允许重复合并，不允许如2 2 2 2直接变为4
+							v = Card.ILLEGAL;// 不允许重复合并，不允许如2 2 2 2直接变为4
 							tx = 0;
 							ty = 0;
 							break;
-						} else if (cardStatus[i][y].getValue() != 0) {
-							v = cardStatus[i][y].getValue();
+						} else if (temval > 0) {
+							v = temval;
 							tx = x;
 							ty = y;
 							move(x, y, i, y);
+							break;
+						}else if (temval == Card.BLOCK) {// 障碍卡片 清空变量
+							v = Card.ILLEGAL;
+							tx = 0;
+							ty = 0;
 							break;
 						}
 					} // end of for
@@ -304,7 +314,7 @@ public class Game {
 					// 合并操作
 					merge(tx, ty, x, y);
 					x++;// 合并后格子变为0，需重新检查
-					v = -1;
+					v = Card.ILLEGAL;
 					tx = 0;
 					ty = 0;
 
@@ -330,27 +340,33 @@ public class Game {
 		for (int x = 0; x < cardStatus.length; x++) {
 			int tx = 0;// 临时x
 			int ty = 0;// 临时y
-			int v = -1;// 保留前一个方格的值
+			int v = Card.ILLEGAL;// 保留前一个方格的值 初始化为非法值
 			for (int y = 0; y < cardStatus[x].length; y++) {
 				// 值为0
 				if (cardStatus[x][y].getValue() == 0) {
 					// 尝试找到非0值填充，或进行合并
 					for (int i = y + 1; i < cardStatus[x].length; i++) {
 						// 找到值和空格前格子值相同，进行合并
-						if (cardStatus[x][i].getValue() == v) {
+						int temval = cardStatus[x][i].getValue();
+						if (temval == v) {
 							// 合并操作
 							merge(tx, ty, x, i);
 							// 清空临时变量
-							v = -1;// 不允许重复合并，不允许如2 2 2 2直接变为4
+							v = Card.ILLEGAL;// 不允许重复合并，不允许如2 2 2 2直接变为4
 							tx = 0;
 							ty = 0;
 							y--;// 合并后格子变为0，需重新检查
 							break;
-						} else if (cardStatus[x][i].getValue() != 0) {
-							v = cardStatus[x][i].getValue();
+						} else if (temval > 0) {
+							v = temval;
 							tx = x;
 							ty = y;
 							move(x, y, x, i);
+							break;
+						}else if (temval == Card.BLOCK) {// 障碍卡片 清空变量
+							v = Card.ILLEGAL;
+							tx = 0;
+							ty = 0;
 							break;
 						}
 					} // end of for
@@ -358,7 +374,7 @@ public class Game {
 				} else if (cardStatus[x][y].getValue() == v) {
 					// 合并操作
 					merge(tx, ty, x, y);
-					v = -1;
+					v = Card.ILLEGAL;
 					tx = 0;
 					ty = 0;
 					y--;
@@ -375,7 +391,7 @@ public class Game {
 
 	/**
 	 * 将game向右滑动
-	 * 
+	 *
 	 * @return 移动是否成功
 	 * @version 创建时间：2016年6月30日21:09:43
 	 * @return
@@ -385,27 +401,33 @@ public class Game {
 		for (int x = 0; x < cardStatus.length; x++) {
 			int tx = 0;// 临时x
 			int ty = 0;// 临时y
-			int v = -1;// 保留前一个方格的值
+			int v = Card.ILLEGAL;// 保留前一个方格的值 初始化为非法值
 			for (int y = cardStatus[x].length - 1; y >= 0; y--) {
 				// 值为0
 				if (cardStatus[x][y].getValue() == 0) {
 					// 尝试找到非0值填充，或进行合并
 					for (int i = y - 1; i >= 0; i--) {
+						int temval = cardStatus[x][i].getValue();
 						// 找到值和空格前格子值相同，进行合并
-						if (cardStatus[x][i].getValue() == v) {
+						if (temval == v) {
 							// 合并操作
 							merge(tx, ty, x, i);
 							// 清空临时变量
-							v = -1;// 不允许重复合并，不允许如2 2 2 2直接变为4
+							v = Card.ILLEGAL;// 不允许重复合并，不允许如2 2 2 2直接变为4
 							tx = 0;
 							ty = 0;
 							y++;// 合并后格子变为0，需重新检查
 							break;
-						} else if (cardStatus[x][i].getValue() != 0) {
-							v = cardStatus[x][i].getValue();
+						} else if (temval > 0) {
+							v = temval;
 							tx = x;
 							ty = y;
 							move(x, y, x, i);
+							break;
+						}else if (temval == Card.BLOCK) {// 障碍卡片 清空变量
+							v = Card.ILLEGAL;
+							tx = 0;
+							ty = 0;
 							break;
 						}
 					} // end of for
@@ -413,7 +435,7 @@ public class Game {
 				} else if (cardStatus[x][y].getValue() == v) {
 					// 合并操作
 					merge(tx, ty, x, y);
-					v = -1;
+					v = Card.ILLEGAL;
 					tx = 0;
 					ty = 0;
 					y++;
@@ -448,17 +470,19 @@ public class Game {
 	}
 
 	/*
-	 * 是否能够进一步行动 判断游戏是否结束 能进一步行动返回true 否则返回false
+	 * 判断当前局势能否进一步行动 判断游戏是否结束
+	 *
+	 * @return 能进一步行动返回true 否则返回false
 	 */
 	private boolean canMerge() {
 		// 不为空 能移动
 		if (!emptyCard.isEmpty()) {
 			return true;
 		}
-	
+
 		// 横向遍历
 		for (int x = 0; x < cardStatus.length; x++) {
-			int v = -1;// 保留前一个方格的值
+			int v = Integer.MIN_VALUE;// 保留前一个方格的值 初始化为非法值
 			for (int y = 0; y < cardStatus[x].length; y++) {
 				// 值为0
 				if (cardStatus[x][y].getValue() == v) {
@@ -472,7 +496,7 @@ public class Game {
 		}
 		// 纵向遍历
 		for (int y = 0; y < cardStatus[0].length; y++) {
-			int v = -1;// 保留前一个方格的值
+			int v = Integer.MIN_VALUE;// 保留前一个方格的值 初始化为非法值
 			for (int x = 0; x < cardStatus.length; x++) {
 				// 值为0
 				if (cardStatus[x][y].getValue() == v) {
@@ -484,7 +508,7 @@ public class Game {
 				}
 			}
 		}
-	
+
 		return false;
 	}
 
@@ -493,7 +517,7 @@ public class Game {
 			maxScore = nowScore;
 			saveMaxScore();// 保存最高分
 		}
-		Log.info("游戏结束 分数：" + nowScore);
+
 		gameController.gameover();
 
 		return;
@@ -536,9 +560,9 @@ public class Game {
 
 	/**
 	 * 保存传递的状态
-	 * 
+	 *
 	 * @version 创建时间：2016年6月29日23:22:02
-	 * @param temp
+	 * @param 状态数组
 	 */
 	public void saveStatus(Card[][] temp) {
 		// 判断堆栈是否满
@@ -568,7 +592,6 @@ public class Game {
 		// undo之后当前分数不会恢复为旧分数
 		nowScore /= 2;// undo之后分数减半，以暂时修补无法回复的缺陷
 		calcEmptyCard();// 重新计算空卡片
-		Log.info("回退成功，当前可回退次数：" + undoCount());
 		return true;
 	}
 
@@ -588,12 +611,15 @@ public class Game {
 		return maxScore;
 	}
 
+	/**
+	 * @return 现在得分nowScore
+	 */
 	public int getNowScore() {
 		return nowScore;
 	}
 
 	/**
-	 * @return the step
+	 * @return 当前已行动的步数step
 	 */
 	public int getStep() {
 		return step;

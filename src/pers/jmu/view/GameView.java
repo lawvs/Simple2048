@@ -1,13 +1,13 @@
 /**
  * @version 创建时间：2016年7月1日22:44:19
  *
+ * @since jdk1.8
  * 游戏的主要外观类
  */
 package pers.jmu.view;
 
 import javafx.application.Application;
 import javafx.scene.Group;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -31,17 +31,13 @@ public class GameView extends Application {
 	private static final int TEXT = -3;
 
 	private GameController gameController;
-	private Canvas canvasGame;
-	private Canvas canvasBg;
-	private TextFlow textFlowScore;
-	private Text textScore;
-	private Card[][] cards;
-	private double widowWidth;
-	private double windowHeight;
-
-	public static void main(String[] args) {
-		launch(args);// 启动javafx窗口
-	}
+	private Canvas canvasGame;// 游戏区 包括数字方块及其背景
+	private Canvas canvasBg;// 背景
+	private TextFlow textFlowScore;// 右上角分数
+	private Text textScore;// 左上角文本
+	private Card[][] cards;// 保存游戏局势
+	private double widowWidth;// 游戏窗口宽
+	private double windowHeight;// 游戏窗口高
 
 	@Override
 	public void init() throws Exception {
@@ -87,8 +83,9 @@ public class GameView extends Application {
 		drawScore();
 		root.getChildren().add(textFlowScore);
 		// 绘制文字
-		Node canvasText = drawTexts();
-		root.getChildren().add(canvasText);
+		Group groupText;
+		groupText = drawTexts();
+		root.getChildren().add(groupText);
 
 		// 新建场景
 		Scene scene = new Scene(root);
@@ -132,12 +129,17 @@ public class GameView extends Application {
 			}
 			// UnDo
 			if (keyCode.equals(KeyCode.U)) {
-				gameController.undo();
-				refrshGame();
+				undo();
 				return;
 			}
 
 		});
+	}
+
+	private void undo() {
+		gameController.undo();
+		refrshGame();
+		return;
 	}
 
 	/*
@@ -177,10 +179,10 @@ public class GameView extends Application {
 		// 文字
 		// text.setFont(Font.loadFont("file:resources/fonts/isadoracyr.ttf",
 		// 120));
-		Text t = new Text("2048");
+		Text t = new Text(Messages.getString("title"));
 		t.setFill(getColor(TEXT));
 
-		t.setFont(Font.font("微软雅黑", FontWeight.BOLD, 50));
+		t.setFont(Font.font("微软雅黑", FontWeight.BOLD, 35));
 		// t.setFontSmoothingType(FontSmoothingType.LCD);
 
 		textFlow.getChildren().addAll(t);
@@ -197,7 +199,7 @@ public class GameView extends Application {
 		double cardWidth = Double.valueOf(Config.getValue("cardWidth"));// 卡片宽
 		double cardHeight = Double.valueOf(Config.getValue("cardHeight"));// 卡片高
 		double border = 0.2;// 间距 几倍卡片长宽
-		double arc = 10;// 圆角
+		double arc = Double.valueOf(Config.getValue("cardArc"));// 圆角
 		// 行列
 		double cardRow = Double.valueOf(Config.getValue("cardRow"));
 		double cardColumn = Double.valueOf(Config.getValue("cardColumn"));
@@ -254,21 +256,21 @@ public class GameView extends Application {
 		// 文字
 		// text.setFont(Font.loadFont("file:resources/fonts/isadoracyr.ttf",
 		// 120));
-		//文字位置
+		// 文字位置
 		textFlowScore.setLayoutX(widowWidth / 2);
-		textFlowScore.setLayoutY(20);
+		textFlowScore.setLayoutY(10);
 		int score;
 		score = gameController.getScore();
 		String str = Messages.getString("score") + String.valueOf(score);
-		
+
 		textScore.setText(str);
 		// 分数高于最高分，文字变为色
 		if (score > gameController.getMaxScore()) {
 			textScore.setFill(Color.GOLD);
-		}else {
+		} else {
 			textScore.setFill(getColor(TEXT));
 		}
-		
+
 		textScore.setFont(Font.font("微软雅黑", FontWeight.BOLD, 30));
 		// t.setFontSmoothingType(FontSmoothingType.LCD);
 		return;
@@ -278,55 +280,6 @@ public class GameView extends Application {
 		drawGame();
 		drawScore();
 		return;
-	}
-
-	/*
-	 * 获取不同数字对应颜色
-	 */
-	// TODO 从文件读取
-	private Color getColor(int value) {
-		Color color = null;
-		switch (value) {
-		case 0:
-			// 空白卡颜色
-			color = new Color(189.0 / 255, 178.0 / 255, 166.0 / 255, 255.0 / 255);
-			break;
-		case 2:
-			color = new Color(220.0 / 255, 211.0 / 255, 201.0 / 255, 255.0 / 255);
-			break;
-		case 4:
-			color = getColor(2).darker();
-			break;
-		case 8:
-			color = getColor(4).darker();
-			break;
-		case 16:
-			color = getColor(8).darker();
-			break;
-		case 32:
-			color = getColor(16).darker();
-			break;
-		case 64:
-			color = getColor(32).darker();
-			break;
-		case BG:
-			// 背景色
-			color = new Color(250.0 / 255, 247.0 / 255, 238.0 / 255, 255.0 / 255);
-			break;
-		case BORDER:
-			// 边缘色
-			color = new Color(174.0 / 255, 161.0 / 255, 148.0 / 255, 255.0 / 255);
-			break;
-		case TEXT:
-			// 文字颜色
-			color = new Color(112.0 / 255, 104.0 / 255, 96.0 / 255, 0.9);
-			break;
-		default:
-			color = Color.BLACK;
-			break;
-		}
-
-		return color;
 	}
 
 	/**
@@ -360,4 +313,69 @@ public class GameView extends Application {
 		refrshGame();
 		return;
 	}
+
+	/*
+	 * 获取不同数字对应颜色
+	 */
+	// TODO 从文件读取
+	private Color getColor(int value) {
+		Color color = Color.BLACK;
+
+		switch (value) {
+		case 0:
+			// 空白卡颜色
+			color = new Color(189.0 / 255, 178.0 / 255, 166.0 / 255, 255.0 / 255);
+			break;
+		case 2:
+			color = new Color(220.0 / 255, 211.0 / 255, 201.0 / 255, 255.0 / 255);
+			break;
+		case 4:
+			color = new Color(219.0 / 255, 207.0 / 255, 184.0 / 255, 255.0 / 255);
+			break;
+		case 8:
+			color = new Color(224.0 / 255, 165.0 / 255, 115.0 / 255, 255.0 / 255);
+			break;
+		case 16:
+			color = new Color(228.0 / 255, 139.0 / 255, 90.0 / 255, 255.0 / 255);
+			break;
+		case 32:
+			color = new Color(228.0 / 255, 117.0 / 255, 86.0 / 255, 255.0 / 255);
+			break;
+		case 64:
+			color = new Color(230.0 / 255, 89.0 / 255, 50.0 / 255, 255.0 / 255);
+			break;
+		case 128:
+			color = new Color(220.0 / 255, 192.0 / 255, 102.0 / 255, 255.0 / 255);
+			break;
+		case 256:
+			break;
+		case 512:
+			color = new Color(220.0 / 255, 192.0 / 255, 102.0 / 255, 255.0 / 255);
+			break;
+		case 1024:
+			color = getColor(2048).darker();
+			break;
+		case 2048:
+			color = new Color(220.0 / 255, 182.0 / 255, 33.0 / 255, 255.0 / 255);
+			break;
+		case BG:
+			// 背景色
+			color = new Color(250.0 / 255, 247.0 / 255, 238.0 / 255, 255.0 / 255);
+			break;
+		case BORDER:
+			// 边缘色
+			color = new Color(174.0 / 255, 161.0 / 255, 148.0 / 255, 255.0 / 255);
+			break;
+		case TEXT:
+			// 文字颜色
+			color = new Color(112.0 / 255, 104.0 / 255, 96.0 / 255, 0.9);
+			break;
+		default:
+			color = Color.BLACK;
+			break;
+		}
+
+		return color;
+	}
+
 }

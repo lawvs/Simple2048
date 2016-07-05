@@ -6,6 +6,7 @@ package pers.jmu.controller;
 
 import pers.jmu.model.Card;
 import pers.jmu.model.Game;
+import pers.jmu.util.Log;
 import pers.jmu.view.GameView;
 
 public class GameController {
@@ -33,6 +34,15 @@ public class GameController {
 	public void setGameView(GameView gameView) {
 		this.gameView = gameView;
 	}
+	
+	public void setCardValue(int x, int y, int value) {
+		boolean flag;
+		flag = game.setCardValue(x, y, value);
+		if (!flag) {
+			Log.warn("坐标越界，设置卡片值失败");
+		}
+		return;
+	}
 
 	public Card[][] getCards() {
 		Card[][] cards = game.getCardStatus();
@@ -51,11 +61,13 @@ public class GameController {
 
 	public void gameover() {
 		gameView.gameover();
+		Log.info("游戏结束 分数：" + game.getNowScore());
 		return;
 	}
 
 	public void restart() {
 		game.restart();
+		Log.info("开始游戏");
 		return;
 	}
 
@@ -71,6 +83,7 @@ public class GameController {
 
 	public void undo() {
 		game.undoStatus();
+		Log.info("回退成功，当前可回退次数：" + game.undoCount());
 		return;
 	}
 

@@ -60,7 +60,7 @@ public class Config {
 		if (file.exists()) {// 当前目录下文件存在，尝试读取当前目录下配置
 			try (InputStream ins = new FileInputStream(file);) {
 				props.load(ins);
-				Log.info("加载当前目录下配置");
+				Log.info("加载当前目录下配置 "+ file.getAbsolutePath());
 			} catch (IOException e) {// 读取失败，读取类目录下配置
 				e.printStackTrace();
 				Log.err("加载当前目录下配置发生异常 IOException", e);
