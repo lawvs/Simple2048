@@ -7,15 +7,12 @@
 package pers.jmu.model;
 
 import pers.jmu.controller.GameController;
-import pers.jmu.util.Config;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 
 /**
- *
- *
  * 游戏逻辑类 使用数组存储2048游戏逻辑
  *
  * @version 创建时间：2016年6月26日16:30:00
@@ -40,10 +37,22 @@ public class Game {
 	private boolean isChange;// 该次移动行为是否有效
 	private int step;// 行走步数
 
-	/**
-	 * 初始化游戏
+	/*
+	 * 初始化游戏，新建控制器
 	 */
 	public Game() {
+		gameController = new GameController(this);
+		init();
+		restart();
+		return;
+	}
+
+	/**
+	 * 初始化游戏 并设置控制器
+	 * @param gameController 游戏控制器
+	 */
+	public Game(GameController gameController) {
+		setGameController(gameController);
 		init();
 		restart();
 		return;
@@ -65,10 +74,10 @@ public class Game {
 	 */
 	private void init() {
 
-		cardRow = Integer.valueOf(Config.getValue("cardRow"));
-		cardColumn = Integer.valueOf(Config.getValue("cardColumn"));
-		maxUndo = Integer.valueOf(Config.getValue("maxUndo"));
-		maxScore = Integer.valueOf(Config.getValue("maxScore"));
+		cardRow = Integer.valueOf(gameController.getValue("cardRow"));
+		cardColumn = Integer.valueOf(gameController.getValue("cardColumn"));
+		maxUndo = Integer.valueOf(gameController.getValue("maxUndo"));
+		maxScore = Integer.valueOf(gameController.getValue("maxScore"));
 
 		cardStatus = new Card[cardRow][cardColumn];
 		emptyCard = new ArrayList<Point>();// 保存空卡片坐标
@@ -527,8 +536,8 @@ public class Game {
 	 * 保存成绩
 	 */
 	private void saveMaxScore() {
-		Config.setValue("maxScore", String.valueOf(maxScore));
-		Config.saveValue("保存最高分:" + maxScore);
+		gameController.setValue("maxScore", String.valueOf(maxScore));
+		gameController.saveValue("保存最高分:" + maxScore);
 		return;
 	}
 

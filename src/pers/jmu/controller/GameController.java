@@ -6,6 +6,7 @@ package pers.jmu.controller;
 
 import pers.jmu.model.Card;
 import pers.jmu.model.Game;
+import pers.jmu.util.Config;
 import pers.jmu.util.Log;
 import pers.jmu.view.GameView;
 
@@ -24,10 +25,15 @@ public class GameController {
 		//gameView = new GameView();
 		//gameView.setGameController(this);
 		
-		game = new Game();
-		game.setGameController(this);
+		game = new Game(this);
+		return;
 	}
 	
+	public GameController(Game game) {
+		this.game = game;
+		return;
+	}
+
 	/**
 	 * @param gameView the gameView to set
 	 */
@@ -95,6 +101,20 @@ public class GameController {
 	public int getMaxScore() {
 		
 		return game.getMaxScore();
+	}
+
+	public String getValue(String key) {
+		return Config.getValue(key);
+	}
+
+	public void setValue(String key, String value) {
+		Config.setValue(key, value);
+		return;
+	}
+
+	public void saveValue(String string) {
+		Config.saveValue(string);
+		return;
 	}
 
 }

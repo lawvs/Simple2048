@@ -25,7 +25,7 @@ import pers.jmu.model.Card;
 import pers.jmu.util.Config;
 import pers.jmu.util.Messages;
 
-public class GameView extends Application {
+public class GameView extends Application implements ViewInterface{
 	private static final int BG = -1;
 	private static final int BORDER = -2;
 	private static final int TEXT = -3;
@@ -282,12 +282,10 @@ public class GameView extends Application {
 		return;
 	}
 
-	/**
-	 * 设置控制器
-	 *
-	 * @param gamecontroller
-	 *            the gamecontroller to set
+	/* (non-Javadoc)
+	 * @see pers.jmu.view.ViewInterface#setGameController(pers.jmu.controller.GameController)
 	 */
+	@Override
 	public void setGameController(GameController gameController) {
 		this.gameController = gameController;
 	}
@@ -376,6 +374,15 @@ public class GameView extends Application {
 		}
 
 		return color;
+	}
+
+	/* (non-Javadoc)
+	 * @see pers.jmu.view.ViewInterface#gamestart()
+	 */
+	@Override
+	public void gameStart() {
+		Application.launch();// 启动GameView的javafx窗口
+		return;
 	}
 
 }

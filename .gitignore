@@ -1,9 +1,10 @@
-#忽略以下文件
+# 忽略以下文件
 .DS_Store
 *.lnk
 *.jar
 /bin/
-
+# 忽略根目录下配置文件
+/config.properties
 # 忽略文本文件
 *.tmp
 *.doc
